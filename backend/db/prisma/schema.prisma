@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Change if using MySQL or SQLite
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id          Int         @id @default(autoincrement())
+  name        String
+  mission     String?
+  contactInfo String?
+  volunteers  Volunteer[]
+  events      Event[]
+}
+
+model Volunteer {
+  id         Int         @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String      @unique
+  status     String
+  orgId      Int
+  organization Organization @relation(fields: [orgId], references: [id])
+  skills     VolunteerSkill[]
+  assignments VolunteerAssignment[]
+}
+
+model Event {
+  id       Int       @id @default(autoincrement())
+  name     String
+  dates    String
+  orgId    Int
+  organization Organization @relation(fields: [orgId], references: [id])
+  tasks    Task[]
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  numRequired Int
+  scheduleTime String
+  eventId     Int
+  status       String   @default("active") 
+  event       Event    @relation(fields: [eventId], references: [id])
+  assignments VolunteerAssignment[]
+}
+
+model Skill {
+  id    Int    @id @default(autoincrement())
+  name  String
+  volunteers VolunteerSkill[]
+}
+
+model VolunteerSkill {
+  id           Int    @id @default(autoincrement())
+  proficiencyLevel Int
+  volId        Int 
+  skillId      Int
+  volunteer    Volunteer @relation(fields: [volId], references: [id])
+  skill        Skill     @relation(fields: [skillId], references: [id])
+  
+  @@unique([volId, skillId]) 
+}
+
+model VolunteerAssignment {
+  id        Int       @id @default(autoincrement())
+  assignDate DateTime
+  status     String
+  volId      Int
+  taskId     Int
+  volunteer  Volunteer @relation(fields: [volId], references: [id])
+  task       Task      @relation(fields: [taskId], references: [id])
+  attendance Attendance?
+}
+
+model Attendance {
+  id            Int       @id @default(autoincrement())
+  checkInTime   DateTime
+  checkOutTime  DateTime?
+  hoursWorked   Float
+  assignId      Int       @unique
+  assignment    VolunteerAssignment @relation(fields: [assignId], references: [id])
+}
